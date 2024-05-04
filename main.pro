@@ -1,16 +1,16 @@
-﻿%Файл main.pro ()
-
 implement main
+    open core
 
 domains
-    node = r(integer, string).
+    node = r(string, stt).
     path = node*.
     queue = path*.
+    piece = e; b; w.
+    stt = st(piece, piece, piece, piece, piece).
 
 class facts
-    operator : (integer, string, string).
-    start : string := "b".
-    finish : string := "k".
+    start : stt := st(w, w, e, b, b).
+    finish : stt := st(w, b, b, w, e).
 
 class predicates
     searchWidth : (queue, path [out], integer) determ.
@@ -18,6 +18,7 @@ class predicates
     nextLevel : (path, path [out]) nondeterm.
     solved : (path) determ.
     prtSolution : (path).
+    operator : (string [out], stt, stt [out]) nondeterm.
 
 clauses
     solved(L) :-
@@ -28,21 +29,25 @@ clauses
             stdio::nl
         end foreach.
 
-    operator(1, "b", "c").
-    operator(2, "b", "d").
-    operator(3, "b", "e").
-    operator(4, "c", "f").
-    operator(5, "c", "g").
-    operator(6, "c", "h").
-    operator(7, "e", "i").
-    operator(8, "e", "j").
-    operator(9, "g", "k").
-    operator(10, "g", "m").
+    operator("slide", st(e, A, B, C, D), st(A, e, B, C, D)).
+    operator("jump", st(e, A, B, C, D), st(B, A, e, C, D)).
+    operator("slide", st(A, e, B, C, D), st(A, B, e, C, D)).
+    operator("slide", st(A, e, B, C, D), st(e, A, B, C, D)).
+    operator("jump", st(A, e, B, C, D), st(A, C, B, e, D)).
+    operator("slide", st(A, B, e, C, D), st(A, e, B, C, D)).
+    operator("slide", st(A, B, e, C, D), st(A, B, C, e, D)).
+    operator("jump", st(A, B, e, C, D), st(e, B, A, C, D)).
+    operator("jump", st(A, B, e, C, D), st(A, B, D, C, e)).
+    operator("slide", st(A, B, C, e, D), st(A, B, e, C, D)).
+    operator("jump", st(A, B, C, e, D), st(A, e, C, B, D)).
+    operator("slide", st(A, B, C, e, D), st(A, B, C, D, e)).
+    operator("slide", st(A, B, C, D, e), st(A, B, C, e, D)).
+    operator("jump", st(A, B, C, D, e), st(A, B, e, D, C)).
 
     searchWidth([T | Queue], Solution, Step) :-
         if solved(T) then
             Solution = T,
-            stdio::write("1. Кількість кроків для пошуку вшир на графі станів: ", Step, "."),
+            stdio::write("1. Кількість кроків для розв'язку головоломки вшир: ", Step, "."),
             stdio::nl
         else
             Step2 = Step + 1,
@@ -54,7 +59,7 @@ clauses
     searchDepth([T | Queue], Solution, Step) :-
         if solved(T) then
             Solution = T,
-            stdio::write("2. Кількість кроків для пошуку вглиб на графі станів: ", Step, "."),
+            stdio::write("2. Кількість кроків для розв'язку головоломки вглиб: ", Step, "."),
             stdio::nl
         else
             Step2 = Step + 1,
@@ -69,21 +74,16 @@ clauses
 
     run() :-
         console::init(),
-        if searchWidth([[r(0, start)]], L, 0) then
-            stdio::write("Пошук вшир на графі станів від '", start, "' до '", finish, "' наступний:"),
-            stdio::nl,
+        if searchWidth([[r("0", start)]], L, 0) then
             prtSolution(L)
         else
-            stdio::write("Помилка! Відповідного маршруту не знайдено"),
+            stdio::write("Помилка! За заданими параметрами нема рішення."),
             stdio::nl
         end if,
-        stdio::nl,
-        if searchDepth([[r(0, start)]], L2, 0) then
-            stdio::write("Пошук вглиб на графі станів від '", start, "' до '", finish, "' наступний:"),
-            stdio::nl,
+        if searchDepth([[r("0", start)]], L2, 0) then
             prtSolution(L2)
         else
-            stdio::write("Помилка! Відповідного маршруту не знайдено"),
+            stdio::write("Помилка! За заданими параметрами нема рішення."),
             stdio::nl
         end if.
 
